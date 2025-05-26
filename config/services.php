@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'neofeeder' => [
+        'username' => env('NEOFEEDER_USERNAME'),
+        'password' => env('NEOFEEDER_PASSWORD'),
+    ],
+
 ];
