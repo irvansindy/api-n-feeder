@@ -150,4 +150,136 @@ class NeoFeederJsonService
             ];
         }
     }
+
+    // ==============
+    public function GetProdi(string $filter = '', int $limit = 10, int $offset = 0)
+    {
+        $username = config('services.neofeeder.username');
+        $password = config('services.neofeeder.password');
+
+        $token = $this->getOrCacheToken($username, $password);
+
+        $payload = [
+            'act' => 'GetProdi',
+            'token' => $token,
+            'filter' => $filter,
+            'limit' => $limit,
+            'offset' => $offset,
+        ];
+
+        return $this->send($payload);
+    }
+
+    public function GetListMataKuliah(string $filter = '', int $limit = 10, int $offset = 0)
+    {
+        $username = config('services.neofeeder.username');
+        $password = config('services.neofeeder.password');
+
+        $token = $this->getOrCacheToken($username, $password);
+
+        $payload = [
+            'act' => 'GetListMataKuliah',
+            'token' => $token,
+            'filter' => $filter,
+            'limit' => $limit,
+            'offset' => $offset,
+        ];
+
+        return $this->send($payload);
+    }
+
+    public function GetDetailMataKuliah(string $filter = '', int $limit = 10, int $offset = 0)
+    {
+        $username = config('services.neofeeder.username');
+        $password = config('services.neofeeder.password');
+
+        $token = $this->getOrCacheToken($username, $password);
+
+        $payload = [
+            'act' => 'GetDetailMataKuliah',
+            'token' => $token,
+            'filter' => $filter,
+            'limit' => $limit,
+            'offset' => $offset,
+        ];
+
+        return $this->send($payload);
+    }
+
+    public function InsertMataKuliah(array $record)
+    {
+        $username = config('services.neofeeder.username');
+        $password = config('services.neofeeder.password');
+
+        $token = $this->getOrCacheToken($username, $password);
+
+        $payload = [
+            'act' => 'InsertMataKuliah',
+            'token' => $token,
+            'record' => $record,
+        ];
+
+        $response = $this->send($payload);
+
+        if (isset($response['error_code']) && $response['error_code'] === 'ERROR_AUTH') {
+            $token = $this->refreshToken($username, $password);
+            $payload['token'] = $token;
+            $response = $this->send($payload);
+        }
+
+        return $response;
+    }
+    
+    public function UpdateMataKuliah(string $key, array $record)
+    {
+        $username = config('services.neofeeder.username');
+        $password = config('services.neofeeder.password');
+
+        $token = $this->getOrCacheToken($username, $password);
+
+        $payload = [
+            'act' => 'UpdateMataKuliah',
+            'token' => $token,
+            'key' => [
+                'id_matkul' => $key
+            ],
+            'record' => $record,
+        ];
+
+        $response = $this->send($payload);
+
+        if (isset($response['error_code']) && $response['error_code'] === 'ERROR_AUTH') {
+            $token = $this->refreshToken($username, $password);
+            $payload['token'] = $token;
+            $response = $this->send($payload);
+        }
+
+        return $response;
+    }
+
+    public function DeleteMataKuliah(string $key)
+    {
+        $username = config('services.neofeeder.username');
+        $password = config('services.neofeeder.password');
+
+        $token = $this->getOrCacheToken($username, $password);
+
+        $payload = [
+            'act' => 'DeleteMataKuliah',
+            'token' => $token,
+            'key' => [
+                'id_matkul' => $key
+            ],
+        ];
+
+        $response = $this->send($payload);
+
+        if (isset($response['error_code']) && $response['error_code'] === 'ERROR_AUTH') {
+            $token = $this->refreshToken($username, $password);
+            $payload['token'] = $token;
+            $response = $this->send($payload);
+        }
+
+        return $response;
+    }
 }

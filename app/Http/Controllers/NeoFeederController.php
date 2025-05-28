@@ -7,6 +7,7 @@ use App\Services\NeoFeederJsonService;
 use App\Helpers\FormatResponseJson;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+
 class NeoFeederController extends Controller
 {
     protected $feeder;
@@ -186,7 +187,177 @@ class NeoFeederController extends Controller
         } catch (\Throwable $e) {
             return FormatResponseJson::error(null, $e->getMessage(), 500);
         }
-}
+    }
+
+    public function getProdi()
+    {
+        $response = $this->feeder->GetProdi();
+
+        if (!isset($response['error_code'])) {
+            return FormatResponseJson::error(null, $response['error_desc'] ?? 'Gagal mendapatkan daftar prodi', 500);
+        }
+        return FormatResponseJson::success($response['data'], 'Daftar prodi berhasil didapatkan');
+    }
+
+    public function getListMataKuliah()
+    {
+        $response = $this->feeder->GetListMataKuliah();
+
+        if (!isset($response['error_code'])) {
+            return FormatResponseJson::error(null, $response['error_desc'] ?? 'Gagal mendapatkan daftar mata kuliah', 500);
+        }
+        return FormatResponseJson::success($response['data'], 'Daftar mata kuliah berhasil didapatkan');
+    }
+
+    public function getDetailMataKuliah()
+    {
+        $filter = "id_matkul = '369a803e-2814-416a-9e28-d52288712419'";
+
+        $response = $this->feeder->GetDetailMataKuliah($filter);
+        // dd($response);
+
+        if (!isset($response['error_code'])) {
+            return FormatResponseJson::error(null, $response['error_desc'] ?? 'Gagal mendapatkan daftar mata kuliah', 500);
+        }
+        return FormatResponseJson::success($response['data'], 'Daftar detail mata kuliah berhasil didapatkan');
+    }
+
+
+    public function insertMataKuliah(NeoFeederJsonService $feeder)
+    {
+        try {
+            $username = config('services.neofeeder.username');
+            $password = config('services.neofeeder.password');
+
+            $record = [
+                "kode_mata_kuliah" => "KR001",
+                "nama_mata_kuliah" => "test insert matakuliah",
+                "id_prodi" => "f157b8d9-ce43-4d9e-8a1d-859a9ac8ccac", // informatika
+                "id_jenis_mata_kuliah" => "A",
+                "id_kelompok_mata_kuliah" => "A",
+                "sks_mata_kuliah" => 2.00,
+                "sks_tatap_muka" => 1.00,
+                "sks_praktek" => 1.00,
+                "sks_praktek_lapangan" => 0.00,
+                "sks_simulasi" => 0.00,
+                "metode_kuliah" => "",
+                "ada_sap" => 0,
+                "ada_silabus" => 0,
+                "ada_bahan_ajar" => 0,
+                "ada_acara_praktek" => 0,
+                "ada_diktat" => 0,
+                "tanggal_mulai_efektif" => "2018-07-22",
+                "tanggal_akhir_efektif" => "2022-07-22"
+            ];
+
+            // Dapatkan token awal (dari cache atau baru)
+            $token = $feeder->getOrCacheToken($username, $password);
+            $response = $feeder->InsertMataKuliah($record);
+
+            // Cek apakah error karena token
+            if (isset($response['error_code']) && $response['error_code'] === 'ERROR_AUTH') {
+                // Refresh token
+                $token = $feeder->refreshToken($username, $password);
+                // Retry insert
+                $response = $feeder->InsertMataKuliah($record);
+            }
+
+            // Tangani jika masih gagal
+            if (isset($response['error_code']) && $response['error_code'] !== 0) {
+                return FormatResponseJson::error(null, $response['error_desc'] ?? 'Gagal menyimpan data', 500);
+            }
+
+            return FormatResponseJson::success($response['data'] ?? [], 'Data Matakuliah berhasil disimpan');
+        } catch (\Throwable $e) {
+            return FormatResponseJson::error(null, $e->getMessage(), 500);
+        }
+    }
+
+    public function updateMataKuliah(NeoFeederJsonService $feeder)
+    {
+        try {
+            $username = config('services.neofeeder.username');
+            $password = config('services.neofeeder.password');
+
+            $key = '0614da8b-6612-4faa-ac44-cf1ab48a355e'; // id data
+
+            $record = [
+                "kode_mata_kuliah" => "KR001",
+                "nama_mata_kuliah" => "test update matakuliah",
+                "id_prodi" => "f157b8d9-ce43-4d9e-8a1d-859a9ac8ccac", // informatika
+                "id_jenis_mata_kuliah" => "A",
+                "id_kelompok_mata_kuliah" => "A",
+                "sks_mata_kuliah" => 2.00,
+                "sks_tatap_muka" => 1.00,
+                "sks_praktek" => 1.00,
+                "sks_praktek_lapangan" => 0.00,
+                "sks_simulasi" => 0.00,
+                "metode_kuliah" => "",
+                "ada_sap" => 0,
+                "ada_silabus" => 0,
+                "ada_bahan_ajar" => 0,
+                "ada_acara_praktek" => 0,
+                "ada_diktat" => 0,
+                "tanggal_mulai_efektif" => "2018-07-22",
+                "tanggal_akhir_efektif" => "2022-07-22"
+            ];
+
+            // Dapatkan token awal (dari cache atau baru)
+            $token = $feeder->getOrCacheToken($username, $password);
+            $response = $feeder->UpdateMataKuliah($key, $record);
+
+            // Cek apakah error karena token
+            if (isset($response['error_code']) && $response['error_code'] === 'ERROR_AUTH') {
+                // Refresh token
+                $token = $feeder->refreshToken($username, $password);
+                // Retry insert
+                $response = $feeder->UpdateMataKuliah($key, $record);
+
+                // dd($response);
+            }
+            // dd($response);
+
+            // Tangani jika masih gagal
+            if (isset($response['error_code']) && $response['error_code'] !== 0) {
+                return FormatResponseJson::error(null, $response['error_desc'] ?? 'Gagal mengubah data', 500);
+            }
+
+            return FormatResponseJson::success($response['data'] ?? [], 'Data Matakuliah berhasil diubah');
+        } catch (\Throwable $e) {
+            return FormatResponseJson::error(null, $e->getMessage(), 500);
+        }
+    }
+
+    public function deleteMataKuliah(NeoFeederJsonService $feeder)
+    {
+        try {
+            $username = config('services.neofeeder.username');
+            $password = config('services.neofeeder.password');
+
+            $key = '0614da8b-6612-4faa-ac44-cf1ab48a355e'; // id data
+            
+            // Dapatkan token awal (dari cache atau baru)
+            $token = $feeder->getOrCacheToken($username, $password);
+            $response = $feeder->DeleteMataKuliah($key);
+
+            // Cek apakah error karena token
+            if (isset($response['error_code']) && $response['error_code'] === 'ERROR_AUTH') {
+                // Refresh token
+                $token = $feeder->refreshToken($username, $password);
+                // Retry insert
+                $response = $feeder->DeleteMataKuliah($key);
+            }
+
+            // Tangani jika masih gagal
+            if (isset($response['error_code']) && $response['error_code'] !== 0) {
+                return FormatResponseJson::error(null, $response['error_desc'] ?? 'Gagal menghapus data', 500);
+            }
+
+            return FormatResponseJson::success($response['data'] ?? [], 'Data Matakuliah berhasil dihapus');
+        } catch (\Throwable $e) {
+            return FormatResponseJson::error(null, $e->getMessage(), 500);
+        }
+    }
 
 
 }
