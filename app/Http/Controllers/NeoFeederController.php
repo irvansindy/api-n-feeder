@@ -7,7 +7,7 @@ use App\Services\NeoFeederJsonService;
 use App\Helpers\FormatResponseJson;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
-
+use App\Http\Requests\MahasiswaRequest; // Pastikan ini sesuai dengan namespace request yang kamu buat
 class NeoFeederController extends Controller
 {
     protected $feeder;
@@ -30,20 +30,40 @@ class NeoFeederController extends Controller
 
     public function getListMahasiswa()
     {
-        $username = 'rroyani887@gmail.com';
-        $password = 'Maju@2024';
+        // $username = 'rroyani887@gmail.com';
+        // $password = 'Maju@2024';
 
-        $tokenResponse = $this->feeder->getToken($username, $password);
+        // $tokenResponse = $this->feeder->getToken($username, $password);
 
-        if (!empty($tokenResponse['error_code'])) {
-            return response()->json(['error' => $tokenResponse['error_desc']], 400);
+        // if (!empty($tokenResponse['error_code'])) {
+        //     return response()->json(['error' => $tokenResponse['error_desc']], 400);
+        // }
+
+        // $token = $tokenResponse['data']['token'];
+
+        // $mahasiswa = $this->feeder->getListMahasiswa($token);
+        
+        // return response()->json($mahasiswa);
+        
+        try {
+                $username = 'rroyani887@gmail.com';
+                $password = 'Maju@2024';
+        
+                $tokenResponse = $this->feeder->getToken($username, $password);
+        
+                if (!empty($tokenResponse['error_code'])) {
+                    return response()->json(['error' => $tokenResponse['error_desc']], 400);
+                }
+        
+                $token = $tokenResponse['data']['token'];
+        
+                $mahasiswa = $this->feeder->getListMahasiswa($token);
+
+                return FormatResponseJson::success($mahasiswa['data'], 'Daftar mahasiswa berhasil didapatkan');
+            //code...
+        } catch (\Throwable $th) {
+            //throw $th;
         }
-
-        $token = $tokenResponse['data']['token'];
-
-        $mahasiswa = $this->feeder->getListMahasiswa($token);
-
-        return response()->json($mahasiswa);
     }
 
     public function insertMahasiswa(NeoFeederJsonService $feeder)
@@ -51,6 +71,64 @@ class NeoFeederController extends Controller
         try {
             $username = 'rroyani887@gmail.com';
             $password = 'Maju@2024';
+
+            $validator = Validator::make(request()->all(), [
+                'nama_mahasiswa' => 'required|string|max:100',
+                'jenis_kelamin' => 'required|in:L,P',
+                'tempat_lahir' => 'required|string|max:50',
+                'tanggal_lahir' => 'required|date',
+                'id_agama' => 'required|integer',
+                'nik' => 'required|string|size:16',
+                'npwp' => 'nullable|string|max:25',
+                'nisn' => 'nullable|string|size:10',
+                'kewarganegaraan' => 'required|string|size:2',
+                'jalan' => 'required|string|max:150',
+                'dusun' => 'nullable|string|max:100',
+                'rt' => 'required|integer|min:0|max:999',
+                'rw' => 'required|integer|min:0|max:999',
+                'kelurahan' => 'required|string|max:100',
+                'kode_pos' => 'nullable|string|max:10',
+                'id_wilayah' => 'required|integer',
+                'id_jenis_tinggal' => 'required|integer',
+                'id_alat_transportasi' => 'nullable|integer',
+                'telepon' => 'nullable|string|max:20',
+                'handphone' => 'nullable|string|max:20',
+                'email' => 'nullable|email|max:100',
+                // Data KPS
+                "penerima_kps" => "boolean",
+                "nomor_kps" => "nullable|string|max:30",
+                
+                // Data Orang Tua
+                "nik_ayah" => "required|string|size:16",
+                "nama_ayah" => "required|string|max:100",
+                "tanggal_lahir_ayah" => "required|date",
+                "id_pendidikan_ayah" => "required|integer",
+                "id_pekerjaan_ayah" => "required|integer",
+                "id_penghasilan_ayah" => "required|integer",
+
+                "nik_ibu" => "required|string|size:16",
+                "nama_ibu_kandung" => "required|string|max:100",
+                "tanggal_lahir_ibu" => "required|date",
+                "id_pendidikan_ibu" => "required|integer",
+                "id_pekerjaan_ibu" => "required|
+integer",
+                "id_penghasilan_ibu" => "required|integer",
+
+                // Data Wali
+                "nama_wali" => "nullable|string|max:100",
+                "tanggal_lahir_wali" => "nullable|date",
+                "id_pendidikan_wali" => "nullable|integer",
+                "id_pekerjaan_wali" => "nullable|integer",
+                "id_penghasilan_wali" => "nullable|integer",
+
+                // Kebutuhan Khusus
+                "id_kebutuhan_khusus_mahasiswa" => "required|integer",
+                "id_kebutuhan_khusus_ayah" => "required|integer",
+                "id_kebutuhan_khusus_ibu" => "required|integer",
+            ]);
+            if ($validator->fails()) {
+                throw new ValidationException($validator);
+            }
 
             $record = [
                 "nama_mahasiswa" => "Pangeran Khairan Asshabir Y Ayuba",
@@ -118,6 +196,9 @@ class NeoFeederController extends Controller
             return FormatResponseJson::success($response['data'] ?? [], 'Data mahasiswa berhasil disimpan');
         } catch (\Throwable $e) {
             return FormatResponseJson::error(null, $e->getMessage(), 500);
+        } catch (ValidationException $e) {
+            // Tangani validasi error
+            return FormatResponseJson::error(null, $e->getMessage(), 422);
         }
     }
 
@@ -221,7 +302,6 @@ class NeoFeederController extends Controller
         }
         return FormatResponseJson::success($response['data'], 'Daftar detail mata kuliah berhasil didapatkan');
     }
-
 
     public function insertMataKuliah(NeoFeederJsonService $feeder)
     {

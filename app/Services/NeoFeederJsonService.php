@@ -25,7 +25,7 @@ class NeoFeederJsonService
         // Cache key berdasarkan username (aman untuk multi-user)
         $cacheKey = 'feeder_token_' . md5($username);
 
-        return Cache::remember($cacheKey, now()->addHours(3), function () use ($username, $password) {
+        return Cache::remember($cacheKey, now()->addHours(1), function () use ($username, $password) {
             $response = $this->getToken($username, $password);
 
             if (!empty($response['error_code'])) {

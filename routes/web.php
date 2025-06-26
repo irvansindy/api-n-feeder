@@ -2,10 +2,25 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NeoFeederController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\StudentController;
+use App\Http\Controllers\TeacherController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('auth.login-feeder');
+})->middleware('guest');
+
+Route::post('/login', [AuthController::class, 'login'])->name('login');
+
+Route::group(['middleware' => 'auth'], function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/students', [StudentController::class, 'index'])->name('mahasiswa.index');
+    Route::get('/teachers', [TeacherController::class, 'index'])->name('dosen.index');
+
+    Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 });
+
 Route::get('/check-soap', function () {
     return class_exists('SoapClient') ? 'SOAP aktif' : 'SOAP tidak aktif';
 });
